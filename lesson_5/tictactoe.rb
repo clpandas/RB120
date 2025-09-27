@@ -1,3 +1,94 @@
+module Displayable
+  def format_choices(choices)
+    case choices.size
+    when 0 then ""
+    when 1 then choices.first.to_s
+    when 2 then choices.join(" or ")
+    else
+      "#{choices[0..-2].join(', ')}, or #{choices[-1]}"
+    end
+  end
+
+  def prompt_player_name
+    puts "What's your name?"
+  end
+
+  def invalid_name_message
+    puts "Sorry, you must enter a name."
+  end
+
+  def prompt_turn_order
+    puts "Do you want to go first or second? (1 = first, 2 = second)"
+  end
+
+  def invalid_turn_order_message
+    puts "Sorry, you must choose 1 or 2."
+  end
+
+  def prompt_marker_choice
+    puts "#{human.name}, do you want to be X or O?"
+  end
+
+  def invalid_marker_choice_message
+    puts "Sorry, please choose X or O"
+  end
+
+  def prompt_square_choice
+    puts "Choose a square between (#{format_choices(board.unmarked_keys)}): "
+  end
+
+  def invalid_square_choice
+    puts "Sorry, you must choose: #{format_choices(board.unmarked_keys)}."
+  end
+
+  def prompt_play_again
+    puts "Would you like to play again? (y/n)"
+  end
+
+  def invalid_play_again_message
+    puts "Sorry, enter y or n"
+  end
+
+  def display_welcome_message
+    puts "Welcome to Tic Tac Toe!"
+    puts ""
+  end
+
+  def display_goodbye_message
+    puts "Thanks for playing Tic Tac Toe! Goodbye!"
+  end
+
+  def clear_screen_and_display_board
+    clear
+    display_board
+  end
+
+  def display_board
+    puts "#{human.name}, you're a #{human.marker}. #{computer.name} is a #{computer.marker}"
+    puts ""
+    board.draw
+    puts ""
+  end
+
+  def display_result
+    clear_screen_and_display_board
+
+    case board.winning_marker
+    when human.marker
+      puts "#{human.name} won!"
+    when computer.marker
+      puts "#{computer.name} won!"
+    else
+      puts "It's a tie!"
+    end
+  end
+
+  def display_play_again_message
+    puts "Let's play again!"
+    puts ""
+  end
+end
+
 class Board
   WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
                   [[1, 4, 7], [2, 5, 8], [3, 6, 9]] + # cols
@@ -97,6 +188,8 @@ class Player
 end
 
 class TTTGame
+  include Displayable
+
   COMPUTER_NAMES = ["Bird", "Cat", "Dog", "Bear", "Fox"]
 
   attr_reader :board, :human, :computer
@@ -123,10 +216,10 @@ class TTTGame
   def set_player_name
     name = ""
     loop do
-      puts "What's your name?"
+      prompt_player_name
       name = gets.chomp
       break unless name.empty?
-      puts "Sorry, you must enter a name."
+      invalid_name_message
     end
 
     human.name = name
@@ -135,10 +228,11 @@ class TTTGame
 
   def choose_turn_order
     choice = nil
-    loop do      puts "Do you want to go first or second? (1 = first, 2 = second)"
+    loop do      
+      prompt_turn_order
       choice = gets.chomp
       break if ["1", "2"].include?(choice)
-      puts "Sorry, you must choose 1 or 2."
+      invalid_turn_order_message
     end
 
     @current_marker = choice == "1" ? human.marker : computer.marker
@@ -147,53 +241,27 @@ class TTTGame
   def choose_marker
     choice = nil
     loop do
-      puts "#{human.name}, do you want to be X or O?"
+      prompt_marker_choice
       choice = gets.chomp.upcase
       break if choice == "X" || choice == "O"
-      puts "Sorry, please choose X or O"
+      invalid_marker_choice_message
     end
 
     human.marker = choice
   end
 
   def assign_computer_marker
-    if human.marker == "X"
-      computer.marker = "O"
-    else
-      computer.marker = "X"
-    end
-  end
-
-  def display_welcome_message
-    puts "Welcome to Tic Tac Toe!"
-    puts ""
-  end
-
-  def display_goodbye_message
-    puts "Thanks for playing Tic Tac Toe! Goodbye!"
-  end
-
-  def clear_screen_and_display_board
-    clear
-    display_board
-  end
-
-  def display_board
-    puts "#{human.name}, you're a #{human.marker}. #{computer.name} is a #{computer.marker}"
-    puts ""
-    board.draw
-    puts ""
+    computer.marker = human.marker == "X" ? "O" : "X"
   end
 
   def human_moves
-    puts "Choose a square between (#{board.unmarked_keys.join(', ')}): "
     square = nil
     loop do
+      prompt_square_choice
       square = gets.chomp.to_i
       break if board.unmarked_keys.include?(square)
-      puts "Sorry, that's not a valid choice."
+      invalid_square_choice
     end
-
     board[square] = human.marker
   end
 
@@ -234,44 +302,26 @@ class TTTGame
     @current_marker == human.marker
   end
 
-  def display_result
-    clear_screen_and_display_board
-
-    case board.winning_marker
-    when human.marker
-      puts "#{human.name} won!"
-    when computer.marker
-      puts "#{computer.name} won!"
-    else
-      puts "It's a tie!"
-    end
-  end
-
   def play_again?
     answer = nil
     loop do
-      puts "Would you like to play again? (y/n)"
+      prompt_play_again
       answer = gets.chomp.downcase
       break if %w(y n).include? answer
-      puts "Sorry, enter y or n"
+      invalid_play_again_message
     end
 
     answer == 'y'
   end
 
   def clear
-    system 'cls'
+    system('cls') || system('clear')
   end
 
   def reset
     board.reset
     choose_turn_order
     clear
-  end
-
-  def display_play_again_message
-    puts "Let's play again!"
-    puts ""
   end
 end
 
